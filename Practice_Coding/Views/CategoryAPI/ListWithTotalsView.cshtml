@@ -1,0 +1,15 @@
+﻿@model Practice_Coding.Models.Categories
+@foreach (Practice_Coding.Models.Category cat in Model)
+{
+    <div class="row" id="catList_View_@cat.CategoryID">
+        <div class="col-sm-8 border border-warning" ondblclick="$('#catList_View_@cat.CategoryID').hide(); $('#catList_Edit_@cat.CategoryID').show();">@cat.CategoryName</div>
+        <div class="col-sm-4 text-right border border-bottom">@cat.Total.ToString("C2")</div>
+    </div>
+    <div class="row" style="display:none;" id="catList_Edit_@cat.CategoryID">
+        <div class="col-sm-8 border border-warning"><input type="text" id="catName_@cat.CategoryID" value="@cat.CategoryName" /></div>
+        <div class="col-sm-4 text-right border border-bottom">
+            <input type="button" value="S" class="btn btn-success" onclick="UpdateCategoryName(@cat.CategoryID);" />
+            <input type="button" value="C" class="btn btn-danger" onclick="$('#catList_View_@cat.CategoryID').show(); $('#catList_Edit_@cat.CategoryID').hide();" />
+        </div>
+    </div>
+}

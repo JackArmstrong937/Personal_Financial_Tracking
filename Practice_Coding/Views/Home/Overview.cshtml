@@ -1,0 +1,243 @@
+﻿@model Practice_Coding.Models.Overview_Page_VM
+@{
+    ViewBag.Title = "Overview";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Scripts{
+    <script type="text/javascript">
+        var CanSubmit = false;
+
+        $(document).ready(function () {
+            //$(".DateField").datePicker();
+            LoadCategoryList();
+        });
+
+        function ShowNewTransaction(TransactionType) {
+            $('#TransactionType').val(TransactionType);
+            $('#NewTransactionSection').show();
+            $('.NewTransactionRow').show();
+        }
+
+        function CalcNewTransTotal() {
+            var TotalAmount = parseFloat($("#TotalAmount").val());
+
+            var Total = 0;
+            $(".NewTransAmount").each(function (i, e) {
+                if ($(e).val() != "") {
+                    Total = Total + parseFloat($(e).val());
+                }
+            });
+
+            $("#NewTransTotal").html("Total:" + Total);
+
+            if (TotalAmount != Total) {
+                $("#NewTransTotal").addClass("bg-danger");
+                CanSubmit = false;
+            }
+            else {
+                $("#NewTransTotal").removeClass("bg-danger");
+                CanSubmit = true;
+            }
+        }
+
+        function SaveNewTransaction() {
+            if (!CanSubmit) {
+                alert("DUDE!!!!");
+                return;
+            }
+
+            $("form").submit();
+        }
+        function CancelNewTransaction() {
+            $('#NewTransactionSection').hide();
+            $('.NewTransactionRow').hide();
+        }
+
+        function UpdateCategoryName(catID) {
+            var NewName = $("#catName_" + catID).val();
+            $.ajax({
+                type: "POST",
+                url: "/CategoryAPI/Save",
+                data: {
+                    "CategoryID": catID,
+                    "CategoryName": NewName
+                },
+                success: function () {
+                    LoadCategoryList();
+                }
+            });
+        }
+
+        function LoadCategoryList() {
+            $.ajax({
+                type: "GET",
+                url: "/CategoryAPI/ListWithTotalsView",
+                success: function (data) {
+                    $("#categoriesContainer").html(data);
+                }
+            });
+        }
+    </script>
+}
+
+<h2>Overview</h2>
+
+<form action="/Home/Overview" method="post">
+    <div class="row">
+        <div class="col-sm-3">
+            <div id="categoriesContainer"></div>
+            <div class="row">
+                <input type="button" value="Add New Category" class="btn btn-primary" onclick="$('#NewCategoryInput').toggle();" />
+            </div>
+            <div class="row" style="display:none;" id="NewCategoryInput">
+                <span>New Category Name: </span>
+                <input type="text" id="catName_0" value="" />
+                <br />
+                <input type="button" value="Save New" class="btn btn-success" onclick="UpdateCategoryName(0); $('#NewCategoryInput').hide(); $('#catName_0').val('');" />
+            </div>
+        </div>
+        <div class="col-sm-9" style="max-height:700px; overflow-y:scroll;">
+            <div class="row">
+                <input type="button" value="New Withdraw" class="btn btn-danger" onclick="ShowNewTransaction('Withdraw');" />
+                <input type="button" value="New Deposit" class="btn btn-success" onclick="ShowNewTransaction('Deposit');" />
+            </div>
+
+            @{
+                List<SelectListItem> CatItems = new List<SelectListItem>();
+                CatItems.Add(new SelectListItem() { Value = "-1", Text = "" });
+
+                foreach (Practice_Coding.Models.Category c in Model.Category_Totals)
+                {
+                    CatItems.Add(new SelectListItem() { Value = c.CategoryID.ToString(), Text = c.CategoryName });
+                }
+            }
+            <div class="row" id="NewTransactionSection" style="display:none">
+                <div class="col-sm-3">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <label>
+                                Transaction Date:
+                            </label>
+                        </div>
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(m => m.NewDate, new { @class = "DateField" })
+                            @Html.HiddenFor(m => m.TransactionType)
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <label>
+                                Payed To:
+                            </label>
+                        </div>
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(m => m.NewPayTo)
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <label>
+                                Description:
+                            </label>
+                        </div>
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(m => m.NewDestription)
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <label>
+                                Status:
+                            </label>
+                        </div>
+                        <div class="col-sm-8">
+                            @Html.TextBoxFor(m => m.NewStatus)
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <label>
+                                Total Amount:
+                            </label>
+                        </div>
+                        <div class="col-sm-8">
+                            <input type="text" id="TotalAmount" value="0" />
+                        </div>
+                    </div>
+
+                    <input type="button" value="Save" class="btn btn-success" onclick="SaveNewTransaction();" />
+                    <input type="button" value="Cancel" class="btn btn-danger" onclick="CancelNewTransaction();" />
+                </div>
+                <div class="col-sm-6">
+                    @for (int i = 0; i < Model.New_Transactions.Count; i++)
+                    {
+                    <div class="row p-3 NewTransactionRow" style="display:none">
+                        <div class="col-sm-3">
+                            @Model.New_Transactions[i].CategoryName
+                            @Html.HiddenFor(m => m.New_Transactions[i].CategoryID)
+                        </div>
+                        <div class="col-sm-2">
+                            @Html.TextBoxFor(m => m.New_Transactions[i].Amount, new { @class = "NewTransAmount", onkeyup = "CalcNewTransTotal();" })
+                        </div>
+                    </div>
+                    }
+                    <div class="row p-3">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-2 border border-top" id="NewTransTotal">Total: 0</div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <div class="row p-3"></div>
+            <div class="row p-3 bg-info">
+                <div class="col-sm-2">
+                    date
+                </div>
+                <div class="col-sm-4">
+                    Payed To
+                </div>
+                <div class="col-sm-3">
+                    Category
+                </div>
+                <div class="col-sm-2">
+                    Amount
+                </div>
+                <div class="col-sm-1">
+                    Status
+                </div>
+            </div>
+
+            @*@for (int i = 1; i < 20; i++)
+                  {
+                      <div class="row p-3" onclick="$(this).next().toggle();">
+                          <div class="col-sm-2">
+                              1/1/2020
+                          </div>
+                          <div class="col-sm-4">
+                              Somebody
+                          </div>
+                          <div class="col-sm-3">
+                              ???
+                          </div>
+                          <div class="col-sm-2">
+                              @i
+                          </div>
+                          <div class="col-sm-1">
+                              C
+                          </div>
+                      </div>*
+
+                < div class="row p-3 DescriptionRow" style="display:none;">
+                          <div class="col-sm-2"></div>
+                          <div class="col-sm-10">
+                              This is my long description of what I did and why
+                          </div>
+                      </div>
+                  }*@
+        </div>
+    </div>
+</form>
+

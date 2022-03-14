@@ -1,0 +1,27 @@
+﻿@model Practice_Coding.Models.Categories
+@{
+    ViewBag.Title = "Blah blah blah, this is the browser title";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>JackTest</h2>
+@foreach (Practice_Coding.Models.Category cat in Model)
+{
+    <div class="row">
+        <div class="col-sm-2">@cat.CategoryName</div>
+        <div class="col-sm-2">@cat.Total</div>
+    </div>
+}
+
+<div>
+    <select class="form-control">
+        <option value="">-- Select A Category --</option>
+        @foreach (Practice_Coding.Models.Category cat in Model)
+        {
+            <option value="@cat.CategoryID">@cat.CategoryName</option>
+        }
+    </select>
+</div>
+<div>
+    <input type="text" class="form-control" />
+</div>
